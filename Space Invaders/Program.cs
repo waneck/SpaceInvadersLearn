@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using SFML.Graphics;
+using SFML.System;
 using SFML.Window;
 
 Console.WriteLine("Hello, Juniors!");
@@ -7,49 +8,73 @@ Console.WriteLine("Space invaders game");
 
 var window = new RenderWindow(new VideoMode(640, 480), "Space Invaders!");
 
-var circle = new SFML.Graphics.CircleShape(10);
-circle.Position = new SFML.System.Vector2f(30, 380);
+var player = new SFML.Graphics.CircleShape(10);
+var playerPosition = new SFML.System.Vector2f(30, 380);
+player.Position = playerPosition;
 
-window.Draw(circle);
-window.Display();
-
-const int SPEED = 5;
+const int SPEED = 100;
+const int LASER_SPEED = 300;
 
 var laser = new SFML.Graphics.RectangleShape(new SFML.System.Vector2f(3, 20));
+var laserPosition = new SFML.System.Vector2f(0, 0);
 laser.FillColor = Color.Yellow;
 var shooting = false;
 
+var enemy = new SFML.Graphics.RectangleShape(new SFML.System.Vector2f(20, 20));
+var enemyPosition = new SFML.System.Vector2f(30, 80);
+enemy.Position = enemyPosition;
+enemy.FillColor = Color.Red;
+
+var clock = new Clock();
+
 while (true)
 {
-    //circle.Position = new SFML.System.Vector2f(circle.Position.X + 5, circle.Position.Y);
-    if (Keyboard.IsKeyPressed(Keyboard.Key.Left) && circle.Position.X >= 10)
+    var deltaTime = clock.Restart().AsSeconds();
+    //player.Position = new SFML.System.Vector2f(player.Position.X + 5, player.Position.Y);
+    if (Keyboard.IsKeyPressed(Keyboard.Key.Left) && playerPosition.X >= 10)
     {
-        circle.Position = new SFML.System.Vector2f(circle.Position.X - SPEED, circle.Position.Y);
-    } else if (Keyboard.IsKeyPressed(Keyboard.Key.Right) && circle.Position.X <= (640 - 20 - 10))
+        playerPosition.X -= SPEED * deltaTime;
+        player.Position = playerPosition;
+    } else if (Keyboard.IsKeyPressed(Keyboard.Key.Right) && playerPosition.X <= (640 - 20 - 10))
     {
-        circle.Position = new SFML.System.Vector2f(circle.Position.X + SPEED, circle.Position.Y);
+        playerPosition.X += SPEED * deltaTime;
+        player.Position = playerPosition;
     } else if (Keyboard.IsKeyPressed(Keyboard.Key.Space) && !shooting)
     {
         shooting = true;
-        laser.Position = new SFML.System.Vector2f(circle.Position.X + 10 - (3.0f / 2), circle.Position.Y);
+        laserPosition = new SFML.System.Vector2f(playerPosition.X + 10 - (3.0f / 2), playerPosition.Y);
     }
 
     if (shooting)
     {
-        laser.Position = new SFML.System.Vector2f(laser.Position.X, laser.Position.Y - 10);
-        if (laser.Position.Y < 0)
+        laserPosition.Y -= LASER_SPEED * deltaTime;
+        laser.Position = laserPosition;
+
+        if (laserPosition.Y <= (enemyPosition.Y + enemy.Size.Y) && 
+            laserPosition.Y >= enemyPosition.Y &&
+            laserPosition.X <= (enemyPosition.X + enemy.Size.X) &&
+            laserPosition.X >= enemyPosition.X)
+        {
+            enemyPosition.X = -100;
+            enemyPosition.Y = -100;
+            enemy.Position = enemyPosition;
+            shooting = false;
+        }
+
+        if (laserPosition.Y < 0)
         {
             shooting = false;
         }
     }
     window.Clear();
-    window.Draw(circle);
+    window.Draw(player);
+    window.Draw(enemy);
     if (shooting)
     {
         window.Draw(laser);
     }
+    window.DispatchEvents();
     window.Display();
-    System.Threading.Thread.Sleep(1000 / 60);
 }
 
 
