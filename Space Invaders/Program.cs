@@ -2,34 +2,43 @@
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
+using Space_Invaders;
 
 Console.WriteLine("Hello, Juniors!");
 Console.WriteLine("Space invaders game");
 
-var window = new RenderWindow(new VideoMode(640, 480), "Space Invaders!");
+RenderWindow window = new RenderWindow(new VideoMode(640, 480), "Space Invaders!");
 
-var player = new SFML.Graphics.CircleShape(10);
-var playerPosition = new SFML.System.Vector2f(30, 380);
+CircleShape player = new CircleShape(10);
+Vector2f playerPosition = new Vector2f(30, 380);
 player.Position = playerPosition;
 
 const int SPEED = 100;
 const int LASER_SPEED = 300;
 
-var laser = new SFML.Graphics.RectangleShape(new SFML.System.Vector2f(3, 20));
+RectangleShape laser = new RectangleShape(new SFML.System.Vector2f(3, 20));
 var laserPosition = new SFML.System.Vector2f(0, 0);
 laser.FillColor = Color.Yellow;
 var shooting = false;
 
-var enemy = new SFML.Graphics.RectangleShape(new SFML.System.Vector2f(20, 20));
-var enemyPosition = new SFML.System.Vector2f(30, 80);
-enemy.Position = enemyPosition;
-enemy.FillColor = Color.Red;
+var enemies = new Enemy[19 * 6];
+
+for (var index = 0; index < enemies.Length; index++)
+{
+    int row = index / 19;
+    int column = index % 19;
+    enemies[index] = new Enemy(new SFML.System.Vector2f(30 + (20 + 10) * column, 80 + (20 + 10) * row));
+}
 
 var clock = new Clock();
+
+float elapsedTime = 0.0f;
 
 while (true)
 {
     var deltaTime = clock.Restart().AsSeconds();
+
+    elapsedTime += deltaTime;
     //player.Position = new SFML.System.Vector2f(player.Position.X + 5, player.Position.Y);
     if (Keyboard.IsKeyPressed(Keyboard.Key.Left) && playerPosition.X >= 10)
     {
@@ -50,15 +59,22 @@ while (true)
         laserPosition.Y -= LASER_SPEED * deltaTime;
         laser.Position = laserPosition;
 
-        if (laserPosition.Y <= (enemyPosition.Y + enemy.Size.Y) && 
-            laserPosition.Y >= enemyPosition.Y &&
-            laserPosition.X <= (enemyPosition.X + enemy.Size.X) &&
-            laserPosition.X >= enemyPosition.X)
+        for (var index = 0; index < enemies.Length; index++)
         {
-            enemyPosition.X = -100;
-            enemyPosition.Y = -100;
-            enemy.Position = enemyPosition;
-            shooting = false;
+            if (enemies[index].laserCollide(laserPosition))
+            {
+                shooting = false;
+            }
+
+            if ( ((int)elapsedTime) % 5 == 0)
+            {
+                enemies[index].shoot();
+            }
+
+            if (enemies[index].isShooting)
+            {
+                enemies[index].laser.Position = new Vector2f(enemies[index].laser.Position.X, enemies[index].laser.Position.Y + LASER_SPEED * deltaTime);
+            }
         }
 
         if (laserPosition.Y < 0)
@@ -68,7 +84,17 @@ while (true)
     }
     window.Clear();
     window.Draw(player);
-    window.Draw(enemy);
+    for (var index = 0; index < enemies.Length; index++)
+    {
+        if (enemies[index].isAlive)
+        {
+            window.Draw(enemies[index].shape);
+        }
+        if (enemies[index].isShooting)
+        {
+            window.Draw(enemies[index].laser);
+        }
+    }
     if (shooting)
     {
         window.Draw(laser);
