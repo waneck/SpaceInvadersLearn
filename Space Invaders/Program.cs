@@ -10,17 +10,21 @@ Console.WriteLine("Space invaders game");
 RenderWindow window = new RenderWindow(new VideoMode(640, 480), "Space Invaders!");
 
 
-var level = new Level(new Vector2f(640, 480));
+// var level = new Level(new Vector2f(640, 480));
+EditorLevel.CreateScene();
+GameObject.StartRoot();
 var clock = new Clock();
 
 while (true)
 {
     var deltaTime = clock.Restart().AsSeconds();
 
-    level.Update(deltaTime);
+    //level.Update(deltaTime);
+    GameObject.UpdateRoot(deltaTime);
 
     window.Clear();
-    level.Draw(window);
+    //level.Draw(window);
+    GameObject.DrawRoot(window);
     window.DispatchEvents();
     window.Display();
 }
